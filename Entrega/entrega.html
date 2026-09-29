@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Práctica Tag Helpers HeroesWeb</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  body { font-family: "Segoe UI", Arial, sans-serif; font-size: 11pt; color: #1d1d1f; line-height: 1.45; }
+  h1 { font-size: 20pt; margin: 0 0 4px; }
+  h2 { font-size: 14pt; margin: 22px 0 8px; border-bottom: 2px solid #512bd4; padding-bottom: 3px; color: #512bd4; }
+  h3 { font-size: 11.5pt; margin: 14px 0 4px; }
+  .sub { color: #555; margin: 0 0 14px; }
+  code { font-family: Consolas, monospace; font-size: 10pt; background: #f1f1f4; padding: 1px 4px; border-radius: 3px; }
+  pre { font-family: Consolas, monospace; font-size: 9pt; background: #f1f1f4; padding: 8px 10px; border-radius: 4px; white-space: pre-wrap; word-break: break-all; }
+  table { border-collapse: collapse; width: 100%; font-size: 10pt; margin: 6px 0; }
+  th, td { border: 1px solid #ccc; padding: 4px 7px; text-align: left; vertical-align: top; }
+  th { background: #efeafd; }
+  ul { margin: 4px 0; padding-left: 20px; }
+  figure { margin: 10px 0 18px; page-break-inside: avoid; }
+  figure img { width: 100%; border: 1px solid #ccc; }
+  figcaption { font-size: 9.5pt; color: #555; margin-top: 3px; }
+  .page-break { page-break-before: always; }
+</style>
+</head>
+<body>
+
+<h1>Práctica guiada: Tag Helpers en HeroesWeb</h1>
+<p class="sub">Web III · Razor Pages · Proyecto Héroes · .NET 10<br>
+Alumno: Colautti Rodriguez Nicolas<br>
+Repositorio: <a href="https://github.com/Niko1099/WebHeroes">https://github.com/Niko1099/WebHeroes</a></p>
+
+<h2>Componentes agregados</h2>
+<table>
+  <tr><th>Qué se necesita</th><th>Carpeta</th><th>Archivo</th></tr>
+  <tr><td>Modelo del formulario</td><td>Models</td><td>InscripcionMisionInput.cs</td></tr>
+  <tr><td>PageModel</td><td>Pages/Laboratorio</td><td>Inscripcion.cshtml.cs</td></tr>
+  <tr><td>Formulario con Tag Helpers</td><td>Pages/Laboratorio</td><td>Inscripcion.cshtml</td></tr>
+  <tr><td>Menú</td><td>Pages/Shared</td><td>_Layout.cshtml (enlace "Laboratorio Tag Helpers")</td></tr>
+  <tr><td>Importación de Tag Helpers</td><td>Pages</td><td>_ViewImports.cshtml (ya tenía <code>@addTagHelper</code>)</td></tr>
+</table>
+<p>No se modificaron <code>Program.cs</code>, los contextos, Identity ni la conexión. El desafío adicional agrega <code>int? Integrantes</code> con <code>[Required]</code>, <code>[Range(1, 10)]</code> y <code>[Display(Name = "Integrantes del equipo")]</code>; el control se genera como <code>type="number"</code> y el número aparece en la confirmación.</p>
+
+<h2>HTML generado (paso 7)</h2>
+<pre>&lt;label class="form-label" for="Inscripcion_Nombre"&gt;Nombre del héroe&lt;/label&gt;
+&lt;input class="form-control" type="text" ... id="Inscripcion_Nombre" maxlength="100" name="Inscripcion.Nombre" value=""&gt;
+&lt;input class="form-control" type="email" ... id="Inscripcion_Email" name="Inscripcion.Email" value=""&gt;
+&lt;option value="1"&gt;Rescate de civiles&lt;/option&gt;
+&lt;input class="form-control" type="number" ... id="Inscripcion_Integrantes" name="Inscripcion.Integrantes" value=""&gt;
+&lt;input name="__RequestVerificationToken" type="hidden" value="CfDJ8..."&gt;
+&lt;a href="/Laboratorio/Inscripcion?misionId=1"&gt;Preparar inscripción a Rescate de civiles&lt;/a&gt;
+&lt;form method="post" action="/Laboratorio/Inscripcion?handler=Inscribir"&gt;</pre>
+
+<h2>Pruebas guiadas (paso 8)</h2>
+<table>
+  <tr><th>Nº</th><th>Acción</th><th>Resultado obtenido</th></tr>
+  <tr><td>1</td><td>Abrir el formulario desde el menú</td><td>Listas con 3 opciones cada una, empiezan sin selección</td></tr>
+  <tr><td>2</td><td>Enviar los campos vacíos</td><td>No se acepta; resumen y avisos de los 5 campos obligatorios</td></tr>
+  <tr><td>3</td><td>Nombre AB</td><td>"El nombre debe tener entre 3 y 100 caracteres."</td></tr>
+  <tr><td>4</td><td>Correo flash-sin-arroba</td><td>"Ingrese un correo válido."; no se acepta</td></tr>
+  <tr><td>5</td><td>Ciudad y misión elegidas, nombre inválido</td><td>Tras el POST las listas siguen con opciones y conservan Central City y Rescate de civiles</td></tr>
+  <tr><td>6</td><td>Flash, flash@example.com, Central City, Rescate de civiles</td><td>"Inscripción válida: Flash — Rescate de civiles en Central City. Integrantes del equipo: 3. …"</td></tr>
+  <tr><td>7</td><td>Observaciones vacías</td><td>Se acepta; es opcional</td></tr>
+  <tr><td>8</td><td>Nueva inscripción</td><td>GET con el formulario limpio</td></tr>
+  <tr><td>9</td><td>Inscripción rápida</td><td>GET <code>?misionId=1</code> con Rescate de civiles seleccionada</td></tr>
+  <tr><td>10</td><td>Tabla Heroes en SQL Server</td><td>Siguen los mismos 3 héroes; la actividad no agrega filas</td></tr>
+  <tr><td>—</td><td>CiudadInventada desde Elementos</td><td>El servidor la rechaza: "Seleccione una ciudad de la lista."</td></tr>
+  <tr><td>—</td><td>Integrantes: vacío, 0, 1, 10, 11</td><td>Vacío, 0 y 11 rechazados; 1 y 10 aceptados</td></tr>
+</table>
+
+<h2>Respuestas</h2>
+
+<h3>1. ¿Dónde se ejecuta un Tag Helper y qué recibe el navegador?</h3>
+<p>Se ejecuta en el servidor, mientras Razor arma la página. El navegador nunca ve los atributos <code>asp-...</code>: recibe HTML común ya generado. Por ejemplo, <code>&lt;input asp-for="Inscripcion.Nombre"&gt;</code> llega como un input con <code>type="text"</code>, <code>id="Inscripcion_Nombre"</code>, <code>name="Inscripcion.Nombre"</code>, <code>maxlength="100"</code> y sus atributos <code>data-val-*</code>.</p>
+
+<h3>2. ¿Qué diferencia hay entre asp-for y [BindProperty]?</h3>
+<p>Trabajan en sentidos opuestos. <code>asp-for</code> está en la vista y genera el HTML de salida: lee la propiedad (tipo, <code>[Display]</code>, <code>[Required]</code>, valor) y escribe el id, el name, el type y la validación. <code>[BindProperty]</code> está en el PageModel y sirve para la entrada: cuando llega el POST, el model binding toma los valores según su name y los carga en <code>Inscripcion</code>. <code>asp-for</code> decide cómo se llama cada campo; <code>[BindProperty]</code> usa ese nombre para llenar el objeto.</p>
+
+<h3>3. ¿Por qué se escribe Inscripcion.Nombre en asp-for?</h3>
+<p>Porque el <code>@model</code> de la página es <code>InscripcionModel</code>, no <code>InscripcionMisionInput</code>. Nombre es una propiedad de <code>Inscripcion</code>, así que la ruta es <code>Inscripcion.Nombre</code>. Eso genera <code>name="Inscripcion.Nombre"</code>, que coincide con la propiedad <code>[BindProperty] Inscripcion</code>. Con <code>asp-for="Nombre"</code> no compilaría, porque <code>Model.Nombre</code> no existe.</p>
+
+<h3>4. ¿Qué diferencia hay entre asp-for y asp-items en un selector?</h3>
+<p><code>asp-for</code> es el destino: la propiedad que recibe lo elegido (<code>Inscripcion.MisionId</code>); genera name, id, validación y marca la opción que coincide con su valor. <code>asp-items</code> es la fuente: la lista <code>Model.Misiones</code>, cuyos <code>SelectListItem</code> se convierten en los <code>&lt;option&gt;</code>.</p>
+
+<h3>5. ¿Por qué el selector muestra un texto pero envía un identificador?</h3>
+<p>Cada <code>SelectListItem</code> tiene Text y Value y se genera como <code>&lt;option value="1"&gt;Rescate de civiles&lt;/option&gt;</code>. El navegador muestra el texto, pero al enviar solo manda el value. El usuario lee algo entendible y el servidor recibe un dato corto y estable que puede validar con <code>[Range(1, 3)]</code> y que serviría como clave foránea, igual que <code>HeroeId</code> en SuperPoderes.</p>
+
+<h3>6. ¿Qué método atiende asp-page-handler="Inscribir" y por qué?</h3>
+<p><code>OnPostInscribir()</code>. El Tag Helper genera <code>action="/Laboratorio/Inscripcion?handler=Inscribir"</code> y el formulario tiene <code>method="post"</code>. Razor Pages busca el método por convención: On + verbo HTTP + handler. El nombre del handler no decide el verbo; eso lo hace <code>method="post"</code>. Un GET con <code>?handler=Inscribir</code> buscaría <code>OnGetInscribir</code>.</p>
+
+<h3>7. ¿Por qué se ejecuta CargarOpciones() tanto en GET como en POST?</h3>
+<p>Porque HTTP no guarda estado: en cada solicitud se crea un <code>InscripcionModel</code> nuevo y las listas no viajan con el formulario, solo el valor elegido. Sin recargarlas en el POST, al volver a mostrar la página con errores los selectores quedarían vacíos. Además el POST las usa para validar la ciudad (<code>Ciudades.Any</code>) y obtener el nombre de la misión (<code>Misiones.Single</code>).</p>
+
+<h3>8. ¿Por qué debe comprobarse ModelState.IsValid aunque exista validación en el navegador?</h3>
+<p>Porque la del navegador se puede saltar: desactivando JavaScript, agregando <code>novalidate</code>, cambiando el HTML desde F12 o mandando la petición con otra herramienta. Se comprobó enviando AB y un correo inválido sin validación del cliente, y cambiando una ciudad a CiudadInventada: el servidor rechazó ambos casos, y la regla de la ciudad ni siquiera existe en el cliente.</p>
+
+<h3>9. ¿Qué hace asp-route-misionId y cómo llega su valor al PageModel?</h3>
+<p>Agrega el parámetro <code>misionId</code> al enlace. Como <code>@page</code> no tiene un segmento <code>{misionId}</code>, va como query string: <code>/Laboratorio/Inscripcion?misionId=1</code>. Al hacer clic se hace un GET y el model binding pasa el valor al parámetro <code>int? misionId</code> de <code>OnGet</code> por coincidir el nombre. <code>OnGet</code> comprueba que esté entre 1 y 3 y lo asigna a <code>Inscripcion.MisionId</code>, por eso la misión aparece seleccionada.</p>
+
+<h3>10. ¿Qué habría que agregar para guardar realmente una inscripción?</h3>
+<ul>
+  <li>Una tabla Inscripciones en HeroesDb (y opcionalmente Misiones con clave foránea), creada en SSMS con nuevo scaffold, o con una entidad y una migración.</li>
+  <li>El <code>DbSet</code> en <code>HeroesContext</code> e inyectar el contexto en <code>InscripcionModel</code>.</li>
+  <li>En <code>OnPostInscribirAsync</code>, después de <code>ModelState.IsValid</code>, pasar el input a la entidad, <code>_context.Add(...)</code> y <code>await _context.SaveChangesAsync()</code>.</li>
+  <li><code>RedirectToPage</code> con el mensaje en <code>TempData</code> (POST-Redirect-GET) en lugar de <code>return Page()</code>.</li>
+  <li>Opcional: cargar ciudades y misiones desde la base, relacionar con el héroe y proteger la página con <code>AuthorizeFolder</code>.</li>
+</ul>
+
+<h2 class="page-break">Capturas</h2>
+
+<figure><img src="01_formulario.png"><figcaption>Figura 1. Formulario abierto desde el menú "Laboratorio Tag Helpers"; las listas empiezan sin selección.</figcaption></figure>
+<figure><img src="02_campos_vacios.png"><figcaption>Figura 2. Envío con campos vacíos: resumen y avisos junto a cada campo.</figcaption></figure>
+<figure><img src="03_validacion_servidor.png"><figcaption>Figura 3. AB y correo inválido enviados sin validación del cliente: el servidor los rechaza y las listas conservan Central City y Rescate de civiles.</figcaption></figure>
+<figure><img src="04_confirmacion.png"><figcaption>Figura 4. Inscripción válida de Flash, con observaciones vacías.</figcaption></figure>
+<figure><img src="05_inscripcion_rapida.png"><figcaption>Figura 5. Enlace de inscripción rápida (<code>?misionId=1</code>): Rescate de civiles preseleccionada.</figcaption></figure>
+<figure><img src="06_ciudad_inventada.png"><figcaption>Figura 6. Desafío de comprobación: el servidor rechaza CiudadInventada.</figcaption></figure>
+<figure><img src="07_integrantes_11.png"><figcaption>Figura 7. Desafío adicional: 11 integrantes no se acepta.</figcaption></figure>
+<figure><img src="08_integrantes_10.png"><figcaption>Figura 8. Desafío adicional: 10 integrantes se acepta y aparece en la confirmación.</figcaption></figure>
+
+</body>
+</html>

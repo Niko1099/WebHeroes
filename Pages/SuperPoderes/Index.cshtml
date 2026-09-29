@@ -1,0 +1,48 @@
+@page
+@model HeroesWeb.Pages_SuperPoderes.IndexModel
+
+@{
+    ViewData["Title"] = "Superpoderes";
+}
+
+<h1>Superpoderes</h1>
+
+<p>
+    <a asp-page="Create">Crear nuevo</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.SuperPoderes[0].Nombre)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.SuperPoderes[0].Descripcion)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.SuperPoderes[0].Heroe)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model.SuperPoderes) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Nombre)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Descripcion)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Heroe.Nombre)
+            </td>
+            <td>
+                <a asp-page="./Edit" asp-route-id="@item.Id">Editar</a> |
+                <a asp-page="./Details" asp-route-id="@item.Id">Detalles</a> |
+                <a asp-page="./Delete" asp-route-id="@item.Id">Eliminar</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

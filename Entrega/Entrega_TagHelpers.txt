@@ -1,0 +1,268 @@
+PRÁCTICA GUIADA: TAG HELPERS EN ASP.NET CORE
+Web III · Razor Pages · Proyecto Héroes · .NET 10
+Alumno: Colautti Rodriguez Nicolas
+Fecha: 29/09/2026
+
+REPOSITORIO DE GITHUB
+https://github.com/Niko1099/WebHeroes
+
+El código del proyecto HeroesWeb está en la raíz del repositorio (también
+comprimido en HeroesWeb.zip). Las capturas de las pruebas están en Entrega/.
+
+
+======================================================================
+1. MODIFICACIÓN DEL PROYECTO
+======================================================================
+
+Se continuó el proyecto HeroesWeb de la práctica anterior (Database First +
+Identity). No se tocaron Program.cs, HeroesContext, ApplicationDbContext,
+Identity ni la cadena de conexión.
+
+Archivos nuevos:
+  - Models/InscripcionMisionInput.cs
+      Modelo del formulario con Data Annotations (Required, StringLength,
+      EmailAddress, Range, Display). No es tabla ni está en el DbContext.
+  - Pages/Laboratorio/Inscripcion.cshtml.cs
+      PageModel InscripcionModel: [BindProperty] Inscripcion, listas
+      Ciudades y Misiones, OnGet(int? misionId), OnPostInscribir() y
+      CargarOpciones().
+  - Pages/Laboratorio/Inscripcion.cshtml
+      Formulario con Tag Helpers: asp-for, asp-items, asp-validation-for,
+      asp-validation-summary, asp-page, asp-page-handler, asp-route-misionId
+      y <partial name="_ValidationScriptsPartial" />.
+
+Archivos modificados:
+  - Pages/Shared/_Layout.cshtml
+      Enlace "Laboratorio Tag Helpers" en el menú con asp-page. Lleva
+      asp-area="" igual que los demás enlaces del menú, para que también
+      funcione desde las páginas de Identity (Login y Registro).
+
+Sin cambios porque ya estaba:
+  - Pages/_ViewImports.cshtml ya tenía
+      @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+Desafío adicional (integrantes del equipo):
+  - Propiedad int? Integrantes en InscripcionMisionInput con
+      [Required(ErrorMessage = "Ingrese la cantidad de integrantes.")]
+      [Range(1, 10, ErrorMessage = "Los integrantes deben estar entre 1 y 10.")]
+      [Display(Name = "Integrantes del equipo")]
+  - Label, input y span de validación con Tag Helpers en Inscripcion.cshtml.
+  - El número se muestra en la confirmación.
+  - El control se generó como <input type="number" ...>.
+
+Compilación: dotnet build -> Build succeeded, 0 errores.
+
+
+======================================================================
+2. HTML GENERADO (PASO 7, F12 -> ELEMENTOS)
+======================================================================
+
+Label del nombre (apunta al id del control):
+  <label class="form-label" for="Inscripcion_Nombre">Nombre del héroe</label>
+
+Input del nombre:
+  <input class="form-control" type="text" data-val="true"
+         data-val-length="El nombre debe tener entre 3 y 100 caracteres."
+         data-val-length-max="100" data-val-length-min="3"
+         data-val-required="Ingrese el nombre del héroe."
+         id="Inscripcion_Nombre" maxlength="100" name="Inscripcion.Nombre" value="">
+
+Correo (sale como type="email"):
+  <input class="form-control" type="email" ... id="Inscripcion_Email"
+         name="Inscripcion.Email" value="">
+
+Selector de misión (Rescate de civiles tiene valor 1):
+  <option value="1">Rescate de civiles</option>
+
+Integrantes (desafío, sale como type="number"):
+  <input class="form-control" type="number" ... data-val-range-max="10"
+         data-val-range-min="1" id="Inscripcion_Integrantes"
+         name="Inscripcion.Integrantes" value="">
+
+Token antifalsificación dentro del formulario (campo oculto):
+  <input name="__RequestVerificationToken" type="hidden" value="CfDJ8...">
+
+Enlace de inscripción rápida (GET con parámetro):
+  <a href="/Laboratorio/Inscripcion?misionId=1">
+      Preparar inscripción a Rescate de civiles </a>
+
+Formulario (POST al handler Inscribir):
+  <form method="post" action="/Laboratorio/Inscripcion?handler=Inscribir">
+
+
+======================================================================
+3. PRUEBAS GUIADAS (PASO 8)
+======================================================================
+
+N.º | Acción                                      | Resultado obtenido
+----+---------------------------------------------+---------------------------------------------
+ 1  | Abrir el formulario desde el menú           | OK. Ciudad y Misión con 3 opciones cada una,
+    |                                             | empiezan en "-- Seleccione --".
+ 2  | Enviar los campos vacíos                    | OK. No se acepta. Resumen y avisos: "Ingrese
+    |                                             | el nombre del héroe.", "Ingrese un correo de
+    |                                             | contacto.", "Seleccione una ciudad.",
+    |                                             | "Seleccione una misión.", "Ingrese la
+    |                                             | cantidad de integrantes."
+ 3  | Nombre AB                                   | OK. "El nombre debe tener entre 3 y 100
+    |                                             | caracteres."
+ 4  | Correo flash-sin-arroba                     | OK. "Ingrese un correo válido." No se acepta.
+ 5  | Ciudad y misión elegidas, nombre inválido   | OK. Tras el POST las listas siguen con sus 3
+    |                                             | opciones y conservan Central City y Rescate
+    |                                             | de civiles.
+ 6  | Flash, flash@example.com, Central City,     | OK. "Inscripción válida: Flash — Rescate de
+    | Rescate de civiles (3 integrantes)          | civiles en Central City. Integrantes del
+    |                                             | equipo: 3. Demostración sin guardar en la
+    |                                             | base de datos."
+ 7  | Observaciones vacías, lo demás válido       | OK. Se acepta; observaciones es opcional.
+ 8  | Pulsar Nueva inscripción                    | OK. GET a /Laboratorio/Inscripcion con el
+    |                                             | formulario limpio.
+ 9  | Pulsar el enlace de inscripción rápida      | OK. GET a /Laboratorio/Inscripcion?misionId=1
+    |                                             | con Rescate de civiles seleccionada.
+10  | Revisar la tabla Heroes en SQL Server       | OK. Siguen los mismos 3 héroes (Superman,
+    |                                             | Batman, Camba Con Palo): la actividad no
+    |                                             | agrega filas.
+
+Validación del servidor (sin JavaScript y con novalidate en el <form>):
+  - Se envió AB + correo inválido directo al servidor. La respuesta volvió
+    a /Laboratorio/Inscripcion?handler=Inscribir con los dos errores y sin
+    confirmación.
+
+Desafío de comprobación (CiudadInventada):
+  - Se cambió desde Elementos el valor de una opción de ciudad a
+    CiudadInventada y se envió con los demás datos válidos. El servidor la
+    rechazó con "Seleccione una ciudad de la lista." y no hubo confirmación.
+
+Desafío adicional (Integrantes, enviado directo al servidor):
+  - vacío -> rechazado: "Ingrese la cantidad de integrantes."
+  - 0     -> rechazado: "Los integrantes deben estar entre 1 y 10."
+  - 1     -> aceptado:  "... Integrantes del equipo: 1. ..."
+  - 10    -> aceptado:  "... Integrantes del equipo: 10. ..."
+  - 11    -> rechazado: "Los integrantes deben estar entre 1 y 10."
+  En el navegador, con 0, jQuery Validation muestra el mismo mensaje antes
+  de enviar.
+
+Capturas en la carpeta Entrega/:
+  01_formulario.png           Formulario abierto desde el menú
+  02_campos_vacios.png        Envío con campos vacíos
+  03_validacion_servidor.png  AB + correo inválido rechazados por el servidor;
+                              las listas conservan la selección
+  04_confirmacion.png         Inscripción válida de Flash
+  05_inscripcion_rapida.png   Enlace con misionId=1: misión preseleccionada
+  06_ciudad_inventada.png     El servidor rechaza CiudadInventada
+  07_integrantes_11.png       Desafío: 11 integrantes rechazado
+  08_integrantes_10.png       Desafío: 10 integrantes aceptado
+
+
+======================================================================
+4. RESPUESTAS
+======================================================================
+
+1. ¿Dónde se ejecuta un Tag Helper y qué recibe el navegador?
+
+Se ejecuta en el servidor, mientras Razor arma la página. El navegador
+nunca ve los atributos asp-...: recibe HTML común ya generado. Por ejemplo,
+<input asp-for="Inscripcion.Nombre"> llega como un <input type="text"
+id="Inscripcion_Nombre" name="Inscripcion.Nombre" maxlength="100"> con sus
+atributos data-val-* para la validación. Si el navegador viera un asp-for,
+significaría que falta el @addTagHelper en _ViewImports.
+
+2. ¿Qué diferencia hay entre asp-for y [BindProperty]?
+
+Trabajan en sentidos opuestos. asp-for está en la vista y sirve para
+generar el HTML de salida: lee la propiedad (tipo, [Display], [Required],
+valor actual) y escribe el id, el name, el type y la validación del
+control. [BindProperty] está en el PageModel y sirve para la entrada:
+cuando llega el POST, el model binding toma los valores enviados según su
+name y los carga en la propiedad Inscripcion. asp-for decide cómo se llama
+cada campo; [BindProperty] usa ese nombre para llenar el objeto.
+
+3. ¿Por qué se escribe Inscripcion.Nombre en asp-for?
+
+Porque el @model de la página es InscripcionModel (el PageModel), no
+InscripcionMisionInput. Nombre no es una propiedad directa del modelo, sino
+de su propiedad Inscripcion, así que la ruta es Inscripcion.Nombre. Esa
+ruta genera name="Inscripcion.Nombre", que coincide con la propiedad
+[BindProperty] Inscripcion, y así el binder sabe que el valor va a
+Inscripcion.Nombre. Con asp-for="Nombre" no compilaría, porque
+Model.Nombre no existe. En MVC, si la vista recibe directamente
+InscripcionMisionInput, bastaría con asp-for="Nombre".
+
+4. ¿Qué diferencia hay entre asp-for y asp-items en un selector?
+
+asp-for indica dónde va la respuesta: la propiedad que recibe lo elegido
+(Inscripcion.MisionId). Con ella se generan el name, el id y la validación,
+y queda marcada la opción cuyo valor coincide con lo que ya tiene la
+propiedad. asp-items indica de dónde salen las opciones: la lista
+Model.Misiones, cuyos SelectListItem se convierten en los <option>. Uno es
+el destino del dato y el otro la fuente de las opciones.
+
+5. ¿Por qué el selector muestra un texto pero envía un identificador?
+
+Porque cada SelectListItem tiene Text y Value y se genera como
+<option value="1">Rescate de civiles</option>. El navegador muestra el
+contenido del option, pero al enviar el formulario solo manda el value. El
+usuario lee algo entendible y el servidor recibe un dato corto y estable
+que puede validar ([Range(1, 3)]) y que, si se guardara, serviría como
+clave foránea, igual que HeroeId en SuperPoderes. Si se cambia el texto de
+la misión, el identificador sigue siendo el mismo.
+
+6. ¿Qué método atiende asp-page-handler="Inscribir" en este formulario y
+   por qué?
+
+Lo atiende OnPostInscribir(). El Tag Helper genera
+action="/Laboratorio/Inscripcion?handler=Inscribir" y el formulario tiene
+method="post". Razor Pages busca el método por convención: On + verbo
+HTTP + nombre del handler (y opcionalmente Async), o sea On + Post +
+Inscribir. El nombre del handler no decide el verbo; eso lo hace
+method="post". Un GET con ?handler=Inscribir buscaría OnGetInscribir.
+
+7. ¿Por qué se ejecuta CargarOpciones() tanto en GET como en POST?
+
+Porque HTTP no guarda estado: en cada solicitud se crea un InscripcionModel
+nuevo, y las listas no viajan con el formulario (solo se envía el valor
+elegido). Si el POST no las recargara, al volver a mostrar la página con
+errores los selectores quedarían sin opciones. Además, en el POST las
+listas se usan para comprobar que la ciudad sea una de la lista
+(Ciudades.Any) y para obtener el nombre de la misión en la confirmación
+(Misiones.Single). En la prueba 5 se vio que, después del error, las listas
+seguían con sus opciones y la selección.
+
+8. ¿Por qué debe comprobarse ModelState.IsValid aunque exista validación
+   en el navegador?
+
+Porque la validación del navegador se puede saltar: desactivando
+JavaScript, agregando novalidate, cambiando el HTML desde F12 o mandando la
+petición con otra herramienta. Sirve para avisar rápido al usuario, pero
+solo la del servidor protege la aplicación. En la práctica lo comprobé:
+enviando AB y un correo inválido sin validación del cliente, el servidor
+devolvió los errores; y al cambiar una ciudad a CiudadInventada, el
+servidor la rechazó con "Seleccione una ciudad de la lista.", una regla que
+ni siquiera existe en el cliente.
+
+9. ¿Qué hace asp-route-misionId y cómo llega su valor al PageModel?
+
+Agrega el parámetro misionId a la URL del enlace. Como la directiva @page
+no tiene un segmento {misionId}, se agrega como query string:
+href="/Laboratorio/Inscripcion?misionId=1". Al hacer clic se hace un GET, y
+el model binding pasa ese valor al parámetro int? misionId de OnGet porque
+tienen el mismo nombre. OnGet comprueba que esté entre 1 y 3 y lo asigna a
+Inscripcion.MisionId, entonces el selector se genera con Rescate de civiles
+ya seleccionada.
+
+10. ¿Qué habría que agregar para guardar realmente una inscripción?
+
+- Una tabla en HeroesDb, por ejemplo Inscripciones (Id, Nombre, Email,
+  Ciudad, MisionId, Integrantes, Observaciones, Fecha), y si se quiere una
+  tabla Misiones con su clave foránea. Siguiendo Database First: crearla en
+  SSMS y volver a hacer el scaffold, o crear la entidad y una migración.
+- El DbSet correspondiente en HeroesContext.
+- Inyectar HeroesContext en InscripcionModel por el constructor.
+- En el handler (mejor OnPostInscribirAsync), después de ModelState.IsValid,
+  pasar los datos del input a la entidad, hacer _context.Add(...) y
+  await _context.SaveChangesAsync().
+- Después de guardar, RedirectToPage (patrón POST-Redirect-GET) con el
+  mensaje en TempData, en lugar de return Page(), para evitar que se
+  reenvíe al actualizar.
+- Opcional: cargar ciudades y misiones desde la base, relacionar la
+  inscripción con el héroe (HeroeId) y proteger la página con
+  AuthorizeFolder, como Héroes y Superpoderes.
